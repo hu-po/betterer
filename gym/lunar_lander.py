@@ -1,7 +1,8 @@
-import gym
 import time
 from collections import deque
 import torch
+import gym
+import numpy as np
 
 
 # Sources
@@ -11,10 +12,11 @@ import torch
 class ActorNet(torch.nn.Module):
 
     def __init__(self, state_dim=8, hidden_size=16, action_dim=2,
-                 action_gate=None, action_scale=1.0,
-                 non_linear=torch.nn.functional.relu,
+                 action_gate=torch.nn.Softmax(),
+                 action_scale=1.0,
+                 non_linear=torch.nn.ReLU(),
                  batch_norm=False,
-                 use_gpu=False):
+                 use_gpu=True):
         super(ActorNet, self).__init__()
         self.non_linear = non_linear
         self.batch_norm = batch_norm
@@ -43,6 +45,7 @@ class ActorNet(torch.nn.Module):
         torch.nn.init.constant(self.layer2.bias.data, 0)
 
     def forward(self, x):
+        x = torch.autograd.Variable(torch.Tensor(x))
         x = self.non_linear(self.layer1(x))
         if self.batch_norm:
             x = self.bn1(x)
@@ -60,41 +63,53 @@ class ActorNet(torch.nn.Module):
 class Policy(object):
 
     def __init__(self, lr=0.01, gamma=0.95):
-        self.lr = lr  # Learning rate
         self.gamma = gamma  # Reward decay
         # Use an actor net as the model
         self.model = ActorNet()
-        self.optimizer = None
+        self.optimizer = torch.optim.RMSprop(self.model.parameters(), lr)
         # Episode specific data (cleared after each backprop)
+        self.obs, self.actions, self.outputs, self.rewards = deque(), deque(), deque(), deque()
         self.action = None  # Single action (per step)
-        self.obs = deque()
-        self.actions = deque()
-        self.rewards = deque()
 
-    def store(self, obs, reward):
+    def store(self, obs, action, reward):
         # Push the values into episode queues
         self.obs.append(obs)
-        self.actions.append(self.action)
+        self.actions.append(action)
         self.rewards.append(reward)
 
     def step(self, obs):
         output = self.model.forward(obs)
-        # Set internal property and return value
-        self.action = env.action_space.sample()
-        return self.action
+        self.outputs.append(output)
+        return output.cpu().data.numpy()
 
     def learn(self):
-        self.loss = 0
+        # Convert the queues into lists
+        actions = list(self.actions)
+        rewards = list(self.rewards)
+        outputs = list(self.outputs)
+        # Get the discounted reward from the epoch
+        # discounted_rewards = np.zeros_like(rewards)
+        cumulative = 0
+        loss = torch.autograd.Variable()
+        for i in reversed(range(len(rewards))):
+            cumulative = cumulative * self.gamma + rewards[i]
+            cum_tensor = torch.autograd.Variable(torch.FloatTensor([cumulative]), requires_grad=False)
+            loss += torch.nn.MSELoss(torch.FloatTensor(actions[i]), outputs[i]) * cum_tensor
+            # discounted_rewards[i] = cumulative
+        # # Normalize discounted reward
+        # discounted_rewards += np.mean(discounted_rewards)
+        # discounted_rewards /= np.std(discounted_rewards)
+        loss.backward()
+        # Take a gradient step using the optimizer
         self.optimizer.zero_grad()
-        self.loss.backward()
         self.optimizer.step()
-
+        # Clear the episode specific data
+        self.obs, self.actions, self.rewards = deque(), deque(), deque()
 
 
 def epoch(env, policy, min_rate=None, render=True):
-    env.reset()
+    obs = env.reset()
     done = False
-
     # Counter variables for number of steps and total episode time
     epoch_tic = time.clock()
     num_steps = 0
@@ -106,10 +121,10 @@ def epoch(env, policy, min_rate=None, render=True):
         action = policy.step(obs)
         # Step the environment and push outputs to policy
         obs, reward, done, _ = env.step(action)
-        policy.store(obs, reward)
+        policy.store(obs, action, reward)
+        step_toc = time.clock()
+        step_time = step_toc - step_tic
         if min_rate and step_time < min_rate:  # Sleep to ensure minimum rate
-            step_toc = time.clock()
-            step_time = step_toc - step_tic
             time.sleep(min_rate - step_time)
         num_steps += 1
     # Total elapsed time in epoch
