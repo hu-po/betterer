@@ -12,7 +12,7 @@ import numpy as np
 class ActorNet(torch.nn.Module):
 
     def __init__(self, state_dim=8, hidden_size=16, action_dim=2,
-                 action_gate=torch.nn.Softmax(),
+                 action_gate=None,  # torch.nn.Softmax(),
                  action_scale=1.0,
                  non_linear=torch.nn.ReLU(),
                  batch_norm=False,
@@ -68,7 +68,7 @@ class Policy(object):
         self.model = ActorNet()
         self.optimizer = torch.optim.RMSprop(self.model.parameters(), lr)
         # Episode specific data (cleared after each backprop)
-        self.obs, self.actions, self.outputs, self.rewards = deque(), deque(), deque(), deque()
+        self.obs, self.actions, self.rewards = deque(), deque(), deque()
         self.action = None  # Single action (per step)
 
     def store(self, obs, action, reward):
@@ -79,44 +79,41 @@ class Policy(object):
 
     def step(self, obs):
         output = self.model.forward(obs)
-        self.outputs.append(output)
         return output.cpu().data.numpy()
 
+    @staticmethod
+    def _queue_to_var(q):
+        """
+        Converts a deque into a PyTorch Variable
+        :param q: (deque)
+        :return: (Variable)
+        """
+        return torch.autograd.Variable(torch.FloatTensor(np.array(list(q))), requires_grad=False)
+
     def learn(self):
-        # # Convert the queues into lists
-        # actions, rewards, outputs = list(self.actions), list(self.rewards), list(self.outputs)
-        # # Get the discounted reward from the epoch
-        # cumulative = 0
-        # loss = 0
-        # for i in reversed(range(len(rewards))):
-        #     cumulative = cumulative * self.gamma + rewards[i]
-        #     cumulative_tensor = torch.autograd.Variable(torch.FloatTensor([cumulative]), requires_grad=False)
-        #     actions_tensor = torch.autograd.Variable(torch.from_numpy(actions[i]), requires_grad=False)
-        #     loss += - cumulative_tensor * (outputs[i] - actions_tensor)
-        # loss.backward()
-        # Convert the queues into lists
-        actions = np.array(list(self.actions))
-        rewards = list(self.rewards)
-        outputs = list(self.outputs)
         # Get the discounted reward from the epoch
-        discounted_rewards = np.zeros_like(rewards)
+        self.rewards.reverse()  # Reverse the rewards queue
+        reversed_rewards = list(self.rewards)
+        discounted_rewards = np.zeros_like(reversed_rewards)
         cumulative = 0
-        loss = torch.autograd.Variable()
-        for i in reversed(range(len(rewards))):
-            cumulative = cumulative * self.gamma + rewards[i]
+        for i, reward in enumerate(reversed_rewards):
+            cumulative = cumulative * self.gamma + reward
             discounted_rewards[i] = cumulative
         # Normalize discounted reward
         discounted_rewards += np.mean(discounted_rewards)
         discounted_rewards /= np.std(discounted_rewards)
-        actions_var = torch.autograd.Variable(torch.from_numpy(actions), requires_grad=False)
-        loss = torch.nn.CrossEntropyLoss(weight=discounted_rewards)
-        output = loss(outputs[i], actions_var)
-        output.backward()
+        discounted_rewards = torch.autograd.Variable(torch.FloatTensor(discounted_rewards), requires_grad=False)
+        actions_var = self._queue_to_var(self.actions)
+        # Run our epoch (or "batch") through the network
+        model_output = self.model.forward(np.array(list(self.obs)))
+        # Loss is simply MSE of output over actions, weighted by cumulative reward
+        loss = torch.sum(-discounted_rewards.unsqueeze(1) * (model_output - actions_var) ** 2)
+        loss.backward()
         # Take a gradient step using the optimizer
         self.optimizer.zero_grad()
         self.optimizer.step()
         # Clear the episode specific data
-        self.obs, self.actions, self.outputs, self.rewards = deque(), deque(), deque(), deque()
+        self.obs, self.actions, self.rewards = deque(), deque(), deque()
 
 
 def epoch(env, policy, min_rate=None, render=True):
@@ -148,9 +145,9 @@ def epoch(env, policy, min_rate=None, render=True):
     policy.learn()
 
 
-def experiment(env, policy, num_epochs=100):
+def experiment(env, policy, num_epochs=1000):
     for _ in range(num_epochs):
-        epoch(env, policy, min_rate=0.01)
+        epoch(env, policy, min_rate=None)
 
 
 if __name__ == '__main__':
