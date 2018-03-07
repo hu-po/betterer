@@ -83,28 +83,40 @@ class Policy(object):
         return output.cpu().data.numpy()
 
     def learn(self):
+        # # Convert the queues into lists
+        # actions, rewards, outputs = list(self.actions), list(self.rewards), list(self.outputs)
+        # # Get the discounted reward from the epoch
+        # cumulative = 0
+        # loss = 0
+        # for i in reversed(range(len(rewards))):
+        #     cumulative = cumulative * self.gamma + rewards[i]
+        #     cumulative_tensor = torch.autograd.Variable(torch.FloatTensor([cumulative]), requires_grad=False)
+        #     actions_tensor = torch.autograd.Variable(torch.from_numpy(actions[i]), requires_grad=False)
+        #     loss += - cumulative_tensor * (outputs[i] - actions_tensor)
+        # loss.backward()
         # Convert the queues into lists
-        actions = list(self.actions)
+        actions = np.array(list(self.actions))
         rewards = list(self.rewards)
         outputs = list(self.outputs)
         # Get the discounted reward from the epoch
-        # discounted_rewards = np.zeros_like(rewards)
+        discounted_rewards = np.zeros_like(rewards)
         cumulative = 0
         loss = torch.autograd.Variable()
         for i in reversed(range(len(rewards))):
             cumulative = cumulative * self.gamma + rewards[i]
-            cum_tensor = torch.autograd.Variable(torch.FloatTensor([cumulative]), requires_grad=False)
-            loss += torch.nn.MSELoss(torch.FloatTensor(actions[i]), outputs[i]) * cum_tensor
-            # discounted_rewards[i] = cumulative
-        # # Normalize discounted reward
-        # discounted_rewards += np.mean(discounted_rewards)
-        # discounted_rewards /= np.std(discounted_rewards)
-        loss.backward()
+            discounted_rewards[i] = cumulative
+        # Normalize discounted reward
+        discounted_rewards += np.mean(discounted_rewards)
+        discounted_rewards /= np.std(discounted_rewards)
+        actions_var = torch.autograd.Variable(torch.from_numpy(actions), requires_grad=False)
+        loss = torch.nn.CrossEntropyLoss(weight=discounted_rewards)
+        output = loss(outputs[i], actions_var)
+        output.backward()
         # Take a gradient step using the optimizer
         self.optimizer.zero_grad()
         self.optimizer.step()
         # Clear the episode specific data
-        self.obs, self.actions, self.rewards = deque(), deque(), deque()
+        self.obs, self.actions, self.outputs, self.rewards = deque(), deque(), deque(), deque()
 
 
 def epoch(env, policy, min_rate=None, render=True):
