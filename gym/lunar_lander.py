@@ -108,9 +108,9 @@ class Policy(object):
         model_output = self.model.forward(np.array(list(self.obs)))
         # Loss is simply MSE of output over actions, weighted by cumulative reward
         loss = torch.sum(-discounted_rewards.unsqueeze(1) * (model_output - actions_var) ** 2)
+        self.optimizer.zero_grad()
         loss.backward()
         # Take a gradient step using the optimizer
-        self.optimizer.zero_grad()
         self.optimizer.step()
         # Clear the episode specific data
         self.obs, self.actions, self.rewards = deque(), deque(), deque()
