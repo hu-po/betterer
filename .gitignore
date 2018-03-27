@@ -6,6 +6,12 @@ __pycache__*
 .ipynb_checkpoints*
 
 # =========== #
+#    Data     #
+# =========== #
+*.txt
+*.csv
+
+# =========== #
 #    Images   #
 # =========== #
 *.ppm
