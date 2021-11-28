@@ -10,6 +10,7 @@ word_site = "https://www.mit.edu/~ecprice/wordlist.10000"
 response = requests.get(word_site)
 words = response.content.splitlines()
 
+words = [_.decode("utf-8") for _ in response.content.splitlines()]
 words = [_ for _ in words if len (_) >= min_word_len]
 words = [_ for _ in words if len (_) <= max_word_len]
 
