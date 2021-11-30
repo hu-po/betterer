@@ -2,6 +2,50 @@ from typing import List
 import numpy as np
 
 class Solution:
+
+
+    def maximalRectangle(self, matrix: List[List[str]]) -> int:
+        
+        # Convert to numpy for easier time
+        matrix = np.array(matrix, dtype=int).astype(bool)
+        
+        # Edge cases
+        max_size = 1
+        if not np.any(matrix):
+            # All zeros
+            return 0
+        
+        # Get the height matrix
+        h_matrix = np.zeros(matrix.shape, dtype=int)
+        for x in range(matrix.shape[0]):
+            for y in range(matrix.shape[1]):  
+                if matrix[x, y]:
+                    h_matrix[x, y] = h_matrix[x-1, y] + 1
+                else:
+                    h_matrix[x, y] = 0
+
+        print(h_matrix)
+
+        # Find the most consecutive same numbers
+        for x in range(matrix.shape[0]):
+            size = h_matrix[x, 0]
+            height = size
+            consecutive = 1
+            for y in range(1, matrix.shape[1]):  
+                if h_matrix[x, y] > 0:
+                    consecutive += 1
+                    height = min(h_matrix[x, y], height)
+                    size = height * consecutive
+                else:
+                    consecutive = 1
+                    size = h_matrix[x, y]
+                    height = size
+
+                if size > max_size:
+                    max_size = size
+
+        return max_size
+
     def rec_size(self, xa: int, ya: int, xb: int, yb: int) -> int:
         return (yb - ya) * (xb - xa)
     
@@ -54,5 +98,7 @@ class Solution:
         return max_max_size
 
 
-print(Solution().maximalRectangle(
-[["1","1","1","1","1","1","1","1"],["1","1","1","1","1","1","1","0"],["1","1","1","1","1","1","1","0"],["1","1","1","1","1","0","0","0"],["0","1","1","1","1","0","0","0"]]))
+print(Solution().maximalRectangle([["1","0","1","0","0"],["1","0","1","1","1"],["1","1","1","1","1"],["1","0","0","1","0"]]))
+print(Solution().maximalRectangle([["0","1"],["0","1"]]))
+print(Solution().maximalRectangle([["1","0"],["1","0"]]))
+print(Solution().maximalRectangle([["0","0","1"],["1","1","1"]]))
