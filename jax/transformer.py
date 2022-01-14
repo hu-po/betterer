@@ -18,8 +18,8 @@ import torch
 
 def main():
     # input sequence (batch, seq, feature)
-    batch_size = 10
-    seq_size = 32
+    batch_size = 1
+    seq_size = 2
     feat_size = 4
     mu, sigma = 0, 0.1
 
@@ -56,8 +56,11 @@ def jax_transformer(
     """
         Transformer block implemented in JAX.
     """
-    out = seq
-    return out
+    # convert input numpy sequence to tensor
+    seq: jnp.DeviceArray = jnp.array(seq)
+    out: jnp.DeviceArray = jax.nn.gelu(seq)
+    # convert back to numpy array
+    return np.array(out)
 
 
 @print_evaluation
@@ -69,10 +72,14 @@ def torch_transformer(
     """
         Transformer block implemented in PyTorch.
     """
-    seq = torch.from_numpy(seq)
-    transformer_model = torch.nn.Transformer(
-        nhead=num_heads, num_encoder_layers=num_encoder_layers)
-    out = transformer_model(seq, tgt)
+    # convert input numpy sequence to tensor
+    seq: torch.Tensor = torch.from_numpy(seq)
+    activation = torch.nn.GELU()
+    out: torch.Tensor = activation(seq)
+    # transformer_model = torch.nn.Transformer(
+    #     nhead=num_heads, num_encoder_layers=num_encoder_layers)
+    # out = transformer_model(seq, tgt)
+    # convert back to numpy array
     return out.detach().cpu().numpy()
 
 
