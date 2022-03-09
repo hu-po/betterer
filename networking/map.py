@@ -12,7 +12,6 @@ log = logging.getLogger()
 log.setLevel(logging.INFO)
 # log.setLevel(logging.DEBUG)
 
-
 def localhost_ip(
     dns_port: Tuple[str, int] = ("8.8.8.8", 80),
     socket_family: socket.AddressFamily = socket.AF_INET,
@@ -50,10 +49,6 @@ def netmap(
 ) -> str:
     """ Maps network using parallel ping processes. """
 
-    # get my IP and compose a base like 192.168.1.xxx
-    ip_parts = localhost_ip()
-    base_ip = ip_parts[0] + '.' + ip_parts[1] + '.' + ip_parts[2] + '.'
-
     # Create worker processes
     jobs: Queue = Queue()
     outs: Queue = Queue()
@@ -73,6 +68,8 @@ def netmap(
         worker.start()
         # None will eventually kill the worker
         jobs.put(None)
+
+    for worker in workers:
         worker.join()
 
     yield outs.get()
@@ -80,7 +77,7 @@ def netmap(
 
 if __name__ == '__main__':
 
-    log.info(f'This computer is {localhost_ip()}')
-    log.info(f'On this network, I')
+    print(f'This computer is {localhost_ip()}')
+    print(f'On this network')
     for ip in netmap():
-        log.info(f'\t found {ip}')
+        print(f'\t found {ip}')
