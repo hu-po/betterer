@@ -5,13 +5,15 @@
 __pycache__*
 .ipynb_checkpoints*
 
+# Virtual Envs
+venv/
+
 # VSCode
 .vscode
 
 # =========== #
 #    Data     #
 # =========== #
-*.txt
 *.csv
 
 # =========== #
