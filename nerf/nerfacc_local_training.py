@@ -160,14 +160,14 @@ if __name__ == "__main__":
         alpha_thre = 0.0
 
     # setup the radiance field we want to train.
-    max_steps = 20000
+    max_steps = 200
     grad_scaler = torch.cuda.amp.GradScaler(2**10)
     radiance_field = NGPradianceField(
         aabb=args.aabb,
         unbounded=args.unbounded,
     ).to(device)
     optimizer = torch.optim.Adam(
-        radiance_field.parameters(), lr=1e-2, eps=1e-15
+        radiance_field.parameters(), lr=1e-1, eps=1e-15
     )
     scheduler = torch.optim.lr_scheduler.MultiStepLR(
         optimizer,
@@ -184,7 +184,7 @@ if __name__ == "__main__":
     # training
     step = 0
     tic = time.time()
-    for epoch in range(10000000):
+    for epoch in range(1000):
         for i in range(len(train_dataset)):
             radiance_field.train()
             data = train_dataset[i]
@@ -256,7 +256,7 @@ if __name__ == "__main__":
             optimizer.step()
             scheduler.step()
 
-            if step % 10000 == 0:
+            if step % 100 == 0:
                 elapsed_time = time.time() - tic
                 loss = F.mse_loss(rgb[alive_ray_mask], pixels[alive_ray_mask])
                 print(
@@ -297,15 +297,15 @@ if __name__ == "__main__":
                         mse = F.mse_loss(rgb, pixels)
                         psnr = -10.0 * torch.log(mse) / np.log(10.0)
                         psnrs.append(psnr.item())
-                        # imageio.imwrite(
-                        #     "acc_binary_test.png",
-                        #     ((acc > 0).float().cpu().numpy() * 255).astype(np.uint8),
-                        # )
-                        # imageio.imwrite(
-                        #     "rgb_test.png",
-                        #     (rgb.cpu().numpy() * 255).astype(np.uint8),
-                        # )
-                        # break
+                        imageio.imwrite(
+                            "acc_binary_test.png",
+                            ((acc > 0).float().cpu().numpy() * 255).astype(np.uint8),
+                        )
+                        imageio.imwrite(
+                            "rgb_test.png",
+                            (rgb.cpu().numpy() * 255).astype(np.uint8),
+                        )
+                        break
                 psnr_avg = sum(psnrs) / len(psnrs)
                 print(f"evaluation: {psnr_avg=}")
                 train_dataset.training = True
