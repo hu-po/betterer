@@ -1,0 +1,259 @@
+<!doctype html>
+
+<!-- This is ripped off of https://karpathy.ai/ -->
+<!-- Please don't sue me Andrej :) -->
+
+
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>Hugo Ponte</title>
+  <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+
+<body>
+
+  <!-- idea: have a javascript animated loss function converging in the header? :p -->
+  <div id="dhead" class="container">
+    <div class="row">
+      <div id="dpic">
+        <img src="assets/hugo.jpg" class="ppic" />
+      </div>
+      <div id="ddesc">
+        <h1>Hugo Ponte</h1>
+        <h2> I build technology live at youtube.com/@hu-po </h2>
+        <div id="dico">
+          <a href="https://github.com/hu-po"><img src="assets/cgithub.svg" class="iico" /></a>
+          <a href="https://youtube.com/@hu-po"><img src="assets/youtube.svg" class="iico" /></a>
+          <a href="https://hu-po.medium.com/"><img src="assets/crss.svg" class="iico" /></a>
+          <img src="assets/cemail.svg" style="cursor: pointer;" class="iico" id="iemail" title="click to reveal" />
+        </div>
+        <div id="demail"></div> <!-- will reveal email -->
+      </div>
+    </div>
+  </div>
+
+  <hr>
+
+  <div class="container">
+    <div class="htxt">
+      🇺🇸 I am available for consulting work if you are looking for an expert to help you with your specific needs. Email me if you have questions.
+      <br>
+      🇫🇷 Je suis disponible pour des missions de conseil si vous cherchez un expert pour vous aider avec vos besoins
+      spécifiques. Envoyez-moi un email si vous avez des questions.
+      <br>
+      🇪🇸 Estoy disponible para trabajos de consultoría si está buscando un experto para ayudarlo con sus necesidades
+      específicas. Envíame un email si tiene preguntas.
+    </div>
+  </div>
+
+  <hr>
+
+  <div style="background-color: #eee; padding-top: 1px; margin-top: 10px;">
+    <div id="featured-videos" class="container">
+      <div class="ctitle">Videos</div>
+      <div class="row">
+        <br>
+
+        <div class="card">
+          <a href="https://www.youtube.com/watch?v=vzGy6Att_Hk&ab_channel=hu-po">
+            <div class="ccimg"><img src="assets/aiprotein.png" /></div>
+          </a>
+          <div class="cdesc">AI Generated Protein in VR.</div>
+        </div>
+
+        <div class="card">
+          <a href="https://www.youtube.com/watch?v=d9fav90qu1o&ab_channel=hu-po">
+            <div class="ccimg"><img src="assets/lighting_mixed_reality.png" /></div>
+          </a>
+          <div class="cdesc">Lighting in Mixed Reality</div>
+        </div>
+
+        <div class="card">
+          <a href="https://www.youtube.com/watch?v=Y73KU0ShHdM&t=1550s&ab_channel=hu-po">
+            <div class="ccimg"><img src="assets/nerfs.png" /></div>
+          </a>
+          <div class="cdesc">NerfAcc: NeRFs with Python</div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <hr>
+
+  <div id="history" class="container">
+    <div class="ctitle">Experience</div>
+    <div class="entry row">
+      <div class="timespan">
+        2022
+      </div>
+      <div class="ico">
+        <div class="entry-dot"></div>
+        <img src="assets/hupo.jpeg" />
+      </div>
+      <div class="desc">
+        Co-founded a <b>technical consulting</b> company hu-po. I do consulting work in the field of machine learning,
+        robotics, XR, and more!
+      </div>
+    </div>
+
+    <div class="entry row">
+      <div class="timespan">
+        2022
+      </div>
+      <div class="ico">
+        <div class="entry-dot"></div>
+        <img src="assets/wandb.jpeg" />
+      </div>
+      <div class="desc">
+        Machine Learning Workflows Software Engineer at Weights and Biases. I was responsible for the <b>hyperparameter
+        tuning</b> library Sweeps, which is written in <b>Python</b>. I also contributed to the backend, written in <b>Go</b>.
+      </div>
+    </div>
+
+    <div class="entry row">
+      <div class="timespan">
+        2019
+      </div>
+      <div class="ico">
+        <div class="entry-dot"></div>
+        <img src="assets/zumolabs.jpeg" />
+      </div>
+      <div class="desc">
+        Co-founded a company in the machine learning space using <b>synthetic data</b> to improve <b>computer vision</b>. Went through
+        Y-Combinator and raised $1.3 million. Wore many hats including hiring and managing the technical team as the
+        <b>CTO</b>. Developed new technology using <b>PyTorch</b>, <b>Unity</b> & <b>C#</b>. Built (and still maintain!) the Open Source synthetic
+        data toolkit github.com/ZumoLabs/zpy written in <b>Python</b>.
+      </div>
+    </div>
+
+    <div class="entry row">
+      <div class="timespan">
+        2018
+      </div>
+      <div class="ico">
+        <div class="entry-dot"></div>
+        <img src="assets/googlebrain.jpeg" />
+      </div>
+      <div class="desc">
+        Designed, trained and analyzed <b>deep reinforcement learning</b> agents deployed on real world robotic systems
+        (manipulators and legged robots) using <b>Tensorflow, Colab, MuJoCo</b>. Supported internal software and hardware
+        infrastructure projects within research organization, organizing and leading weekly standups for <b>robotic
+        manipulation</b> research group. Team contributor in two publications.
+      </div>
+    </div>
+
+    <div class="entry row">
+      <div class="timespan">
+        2016
+      </div>
+      <div class="ico">
+        <div class="entry-dot"></div>
+        <img src="assets/osaro.jpeg" />
+      </div>
+      <div class="desc">
+        Software integration of vision sensors including: cameras, stereo rigs, and <b>structured light sensors</b>. <b>Object
+        detection</b> and pose estimation pipelines from multimodal input (ICP variants, Deep Learning). Implementing <b>robot
+        motion control</b> (IK, force/torque controllers) and task planning (FSM, Behavior Tree). Creating simulation
+        environments (Unity3D, CAD) for real-time obstacle avoidance and data collection. Osaro creates AI software for
+        robotic control and perception.
+      </div>
+    </div>
+
+    <div class="entry row">
+      <div class="timespan">
+        2014
+      </div>
+      <div class="ico">
+        <div class="entry-dot"></div>
+        <img src="assets/amazon.jpeg" />
+      </div>
+      <div class="desc">
+        Owned the system layout (<b>robotic navigation</b> map) of a new prototype robotic warehouse from initial concepts,
+        through construction and deployment, and in production surviving Amazon's busy peak season. Improved throughput
+        and performance of the warehouse layout through analysis of simulation and real-time data with <b>SQL and Python</b>. I
+        was on the team that organized and judged the Amazon Picking Challenges: international robotic manipulation
+        competitions held in 2015 and 2016.
+      </div>
+    </div>
+
+    <div class="entry row">
+      <div class="timespan">
+        2011
+      </div>
+      <div class="ico">
+        <div class="entry-dot"></div>
+        <img src="assets/CMU.jpeg" />
+      </div>
+      <div class="desc">
+        As part of research <b>MS in Robotics</b>, published work on contact force optimization for 3D motion of snake robots
+        in simulation [3]. Path planning for snake robots using custom 3D structured light sensor [4]. Robots and
+        sensors were programmed in <b>C++</b> and built in-house. Created a robotic grasp simulation pipeline using Python and
+        Matlab for grasp classification. Also graduated from CMU with a dual degree <b>BS in Physics</b> and <b>BS in Mechanical
+        Engineering</b>.
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="ctitle">Publications</div>
+
+    <div class="pub">
+      <div class="pub-title"><a href="https://paperswithcode.com/paper/zpy-open-source-synthetic-data-for-computer">
+          ZPY: Open Source Synthetic Data for Computer Vision</a></div>
+      <div class="pub-venue"> 2020 </div>
+      <div class="pub-authors"><b>Hugo Ponte</b>, Norman Ponte, Sammie Crowder, Kory Stiger, Steven Pecht, Elena Ponte
+      </div>
+    </div>
+
+    <div class="pub">
+      <div class="pub-title"><a href="https://arxiv.org/abs/1909.11639.pdf"> ROBEL: Robotics Benchmarks for Learning
+          with Low-Cost Robots </a></div>
+      <div class="pub-venue"> 2019 </div>
+      <div class="pub-authors">Michael Ahn, Henry Zhu, Kristian Hartikainen, <b>Hugo Ponte</b>, Abhishek Gupta, Sergey
+        Levine, Vikash Kumar</div>
+    </div>
+
+    <div class="pub">
+      <div class="pub-title"><a href="https://arxiv.org/abs/1908.05224"> Multi-Agent Manipulation via Locomotion using
+          Hierarchical Sim2Real </a></div>
+      <div class="pub-venue"> 2019 </div>
+      <div class="pub-authors">Ofir Nachum, Michael Ahn, <b>Hugo Ponte</b>, Shixiang Gu, Vikash Kumar</div>
+    </div>
+
+    <div class="pub">
+      <div class="pub-title"><a href="https://ieeexplore.ieee.org/document/6942900"> Guided Locomotion in 3D for Snake
+          Robots based on Contact Force Optimization </a></div>
+      <div class="pub-venue"> 2014 </div>
+      <div class="pub-authors"><b>Hugo Ponte</b>, Matt Travers, Howie Choset</div>
+    </div>
+
+    <div class="pub">
+      <div class="pub-title"><a href="https://www.ri.cmu.edu/pub_files/2014/6/VisualSensingAutonomy_resubmit.pdf">
+          Visual Sensing for Developing Autonomous Behavior in Snake Robots </a></div>
+      <div class="pub-venue"> 2014 </div>
+      <div class="pub-authors"><b>Hugo Ponte</b>, Max Queenan, Chaohui Gong, Chirstoph Mertz, Matt Travers, Florian
+        Enner,
+        Martial Hebert and Howie Choset</div>
+    </div>
+
+  </div>
+
+  <br><br><br><br><br><br><br><br><br><br><br>
+
+  <!-- attempt hiding from spambots :p -->
+  <script type="text/javascript">
+    var e_is_shown = false;
+    document.getElementById('iemail').addEventListener("click", function () {
+      let demail = document.getElementById('demail');
+      demail.innerHTML = 'hu.po.xyz' + ' _at_ ' + 'gmail' + '.com';
+      demail.style.opacity = e_is_shown ? 0 : 1;
+      e_is_shown = !e_is_shown;
+    })
+  </script>
+</body>
+
+</html>
