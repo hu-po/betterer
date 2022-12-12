@@ -20,8 +20,8 @@ def encode_sequence_batch(model, alphabet, device, sequence_batch, repr_layers=3
     """Encode a batch of sequences using the ESM-2 model."""
 
     # Print the shape of the sequence_batch
-    print(f"Sequence batch size: {len(sequence_batch)}")
-    print(f"Individual sequence shape: {len(sequence_batch[0])}")
+    # print(f"Sequence batch size: {len(sequence_batch)}")
+    # print(f"Individual sequence shape: {len(sequence_batch[0])}")
 
     # Prepare data (first 2 sequences from ESMStructuralSplitDataset superfamily / 4)
     batch_converter = alphabet.get_batch_converter()
@@ -108,6 +108,8 @@ if __name__ == "__main__":
 
             sequence_batch = []
             for i, line in enumerate(reader):
+
+                print(f"Processing line {i} for {args.model}...")
 
                 # seq_id,protein_sequence,pH,data_source,tm
                 seq_id = line[0]
