@@ -116,7 +116,7 @@ if __name__ == "__main__":
                 protein_sequence = line[1]
                 pH = line[2]
                 data_source = line[3]
-                tm = line[4]
+                # tm = line[4]
 
                 # Clip the protein sequence to the maximum sequence length
                 protein_sequence = protein_sequence[:max_sequence_length-2]
