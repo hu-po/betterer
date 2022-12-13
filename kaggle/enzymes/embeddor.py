@@ -85,12 +85,12 @@ if __name__ == "__main__":
         model, alphabet = esm.pretrained.esm2_t33_650M_UR50D()
         repr_layers = 33
         embedding_size = 1280
-        max_sequence_length = 4096 # Made up number
+        max_sequence_length = 1024 # Made up number
     elif args.model == "esm2_t48_15B_UR50D":
         model, alphabet = esm.pretrained.esm2_t48_15B_UR50D()
         repr_layers = 48
         embedding_size = 1280
-        max_sequence_length = 4096 # Made up number
+        max_sequence_length = 1024 # Made up number
 
     # Set the model to evaluation mode
     model.eval()
