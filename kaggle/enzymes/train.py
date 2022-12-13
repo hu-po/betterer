@@ -7,13 +7,13 @@ import argparse
 parser = argparse.ArgumentParser()
 
 # Define command line arguments
-parser.add_argument("--batch_size", type=int, default=2)
+parser.add_argument("--batch_size", type=int, default=32)
 parser.add_argument("--num_epochs", type=int, default=2)
 parser.add_argument("--tm_mean", type=float, default=51.399974792034286)
 parser.add_argument("--tm_std", type=float, default=12.075682499193073)
-parser.add_argument("--tren_csv_file", type=str, default="train_filtered.csv")
-parser.add_argument("--test_csv_file", type=str, default="train_filtered.csv")
-parser.add_argument("--pred_csv_file", type=str, default="train_filtered.csv")
+parser.add_argument("--tren_csv_file", type=str, default="train_ready_embeddings_esm2_t33_650M_UR50D.csv")
+parser.add_argument("--test_csv_file", type=str, default="test_ready_embeddings_esm2_t33_650M_UR50D.csv")
+parser.add_argument("--pred_csv_file", type=str, default="predictions_embeddings_esm2_t33_650M_UR50D.csv")
 
 # Make a class for the dataset
 class TrainData(torch.utils.data.Dataset):
