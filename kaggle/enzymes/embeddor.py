@@ -1,5 +1,4 @@
 """
-
 Use Pre-Trained Protein LLMs to embedd a sequence string.
 
 Command to embedd the TRAIN sequences:
@@ -20,6 +19,7 @@ python embeddor.py --gpu 0 --csv_input_file test_filtered.csv --csv_output_file 
 
 
 """
+
 import argparse
 import csv
 import gc
@@ -49,7 +49,7 @@ def encode_sequence_batch(model, alphabet, device, sequence_batch, repr_layers=3
 
     # Prepare data (first 2 sequences from ESMStructuralSplitDataset superfamily / 4)
     batch_converter = alphabet.get_batch_converter()
-    batch_labels, batch_strs, batch_tokens = batch_converter(sequence_batch)
+    _, _, batch_tokens = batch_converter(sequence_batch)
     batch_lens = (batch_tokens != alphabet.padding_idx).sum(1)
 
     # Extract per-residue representations
@@ -180,21 +180,21 @@ if __name__ == "__main__":
                     # Append the sequence to the sequence batch
                     sequence_batch.append((seq_id, clipped_protein_sequence))
 
-                # If the sequence batch is full, encode the sequences
-                if len(sequence_batch) == args.batch_size:
+                    # If the sequence batch is full, encode the sequences
+                    if len(sequence_batch) >= args.batch_size:
 
-                    encoded_sequences = encode_sequence_batch(
-                        model, alphabet, device, sequence_batch, repr_layers=repr_layers)
+                        encoded_sequences = encode_sequence_batch(
+                            model, alphabet, device, sequence_batch, repr_layers=repr_layers)
 
-                    # Zip the encoded sequences with the sequence IDs
-                    for seq_id, encoded_sequence in zip([seq[0] for seq in sequence_batch], encoded_sequences):
-                        # Write the encoded sequences to the output file
-                        writer.writerow([seq_id] + encoded_sequence.tolist())
+                        # Zip the encoded sequences with the sequence IDs
+                        for seq_id, encoded_sequence in zip([seq[0] for seq in sequence_batch], encoded_sequences):
+                            # Write the encoded sequences to the output file
+                            writer.writerow([seq_id] + encoded_sequence.tolist())
 
-                    # Clear the sequence batch
-                    sequence_batch = []
-                    del encoded_sequences
+                        # Clear the sequence batch
+                        sequence_batch = []
+                        del encoded_sequences
 
-                    # Clear out any stale data in the GPU
-                    gc.collect()
-                    torch.cuda.empty_cache()
+                        # Clear out any stale data in the GPU
+                        gc.collect()
+                        torch.cuda.empty_cache()
