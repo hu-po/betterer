@@ -1,20 +1,43 @@
-import torch
+"""
+
+Use Pre-Trained Protein LLMs to embedd a sequence string.
+
+Command to embedd the TRAIN sequences:
+
+python embeddor.py --gpu 0 --csv_input_file train_filtered.csv --csv_output_file train_embeddings_augmented_esm1v_t33_650M_UR90S_1.csv --batch_size 2 --model esm1v_t33_650M_UR90S_1
+python embeddor.py --gpu 0 --csv_input_file train_filtered.csv --csv_output_file train_embeddings_augmented_esm1v_t33_650M_UR90S_5.csv --batch_size 2 --model esm1v_t33_650M_UR90S_5
+python embeddor.py --gpu 0 --csv_input_file train_filtered.csv --csv_output_file train_embeddings_augmented_esm2_t33_650M_UR50D.csv --batch_size 2 --model esm2_t33_650M_UR50D
+python embeddor.py --gpu 0 --csv_input_file train_filtered.csv --csv_output_file train_embeddings_augmented_esm2_t48_15B_UR50D.csv --batch_size 2 --model esm2_t48_15B_UR50D
+
+Command to embedd the TEST sequences:
+
+python embeddor.py --csv_input_file test_filtered.csv --csv_output_file test_filtered_encoded.csv
+
+python embeddor.py --gpu 0 --csv_input_file test_filtered.csv --csv_output_file test_embeddings_augmented_esm1v_t33_650M_UR90S_1.csv --batch_size 2 --model esm1v_t33_650M_UR90S_1
+python embeddor.py --gpu 0 --csv_input_file test_filtered.csv --csv_output_file test_embeddings_augmented_esm1v_t33_650M_UR90S_5.csv --batch_size 2 --model esm1v_t33_650M_UR90S_5
+python embeddor.py --gpu 0 --csv_input_file test_filtered.csv --csv_output_file test_embeddings_augmented_esm2_t33_650M_UR50D.csv --batch_size 2 --model esm2_t33_650M_UR50D
+python embeddor.py --gpu 0 --csv_input_file test_filtered.csv --csv_output_file test_embeddings_augmented_esm2_t48_15B_UR50D.csv --batch_size 2 --model esm2_t48_15B_UR50D
+
+
+"""
+import argparse
 import csv
 import gc
-import esm
-import argparse
 import random
 
+import esm
+import torch
 
 # Create an ArgumentParser object
 parser = argparse.ArgumentParser()
 
 # Define command line arguments
+parser.add_argument("--gpu", type=int, default=-1)
+parser.add_argument("--augment_multiplier", type=int, default=4)
 parser.add_argument("--batch_size", type=int, default=2)
-parser.add_argument("--csv_input_file", type=str, default="train_filtered.csv")
-parser.add_argument("--csv_output_file", type=str,
-                    default="train_filtered_encoded.csv")
-parser.add_argument("--model", type=str, default="esm1v_t33_650M_UR90S_5")
+parser.add_argument("--csv_input_file", type=str)
+parser.add_argument("--csv_output_file", type=str)
+parser.add_argument("--model", type=str, default="esm1v_t33_650M_UR90S_1")
 
 
 def encode_sequence_batch(model, alphabet, device, sequence_batch, repr_layers=33):
@@ -51,6 +74,33 @@ def encode_sequence_batch(model, alphabet, device, sequence_batch, repr_layers=3
     return encoded_sequences
 
 
+def clip_protein_sequence(protein_sequence, max_sequence_length):
+  # Check if the protein sequence is already shorter than the max
+  # sequence length
+  if len(protein_sequence) <= max_sequence_length:
+    # If it is, return the protein sequence as-is
+    return protein_sequence
+  
+  # Otherwise, we need to select a window of the protein sequence
+  # randomly
+  
+  # Account for the start and end tokens
+  max_sequence_length -= 2
+
+  # Get the start index for the window
+  start_index = random.randint(0, len(protein_sequence) - max_sequence_length)
+
+  # Get the end index for the window
+  end_index = start_index + max_sequence_length
+
+  # Print the length of the new sequence
+  print(f"Clipped protein sequence from {len(protein_sequence)} from {start_index} to {end_index}")
+
+  # Return the sub-sequence of the protein sequence that falls
+  # within the selected window
+  return protein_sequence[start_index:end_index]
+
+
 if __name__ == "__main__":
 
     # Parse command line arguments
@@ -64,8 +114,7 @@ if __name__ == "__main__":
         print(f"Device {i}: {torch.cuda.get_device_name(i)}")
 
     # Check if a GPU is available
-    # device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
-    device = "cpu"
+    device = torch.device(f"cuda:{args.gpu}" if torch.cuda.is_available() else "cpu")
     print(f"Using device {device}")
 
     # Clear out any stale data in the GPU
@@ -86,12 +135,12 @@ if __name__ == "__main__":
         model, alphabet = esm.pretrained.esm2_t33_650M_UR50D()
         repr_layers = 33
         embedding_size = 1280
-        max_sequence_length = 1024 # Made up number
+        max_sequence_length = 2048 # Made up number
     elif args.model == "esm2_t48_15B_UR50D":
         model, alphabet = esm.pretrained.esm2_t48_15B_UR50D()
         repr_layers = 48
         embedding_size = 1280
-        max_sequence_length = 1024 # Made up number
+        max_sequence_length = 2048 # Made up number
 
     # Set the model to evaluation mode
     model.eval()
@@ -117,16 +166,19 @@ if __name__ == "__main__":
                 protein_sequence = line[1]
                 pH = line[2]
                 data_source = line[3]
-                # tm = line[4]
 
-                # Clip the protein sequence to the maximum sequence length
-                protein_sequence = protein_sequence[:max_sequence_length-2]
+                # Test dataset does not have a TM value
+                if len(line) > 4:
+                    tm = line[4]
 
-                # Randomly sample a window of the sequence instead of clipping it
-                protein_sequence = protein_sequence[random.randint(0, len(protein_sequence) - max_sequence_length):]
+                # Augment the sequence with a random window
+                for _ in range(args.augment_multiplier):
 
-                # Append the sequence to the sequence batch
-                sequence_batch.append((seq_id, protein_sequence))
+                    # Randomly sample a window within the sequence instead of clipping it
+                    clipped_protein_sequence = clip_protein_sequence(protein_sequence, max_sequence_length)
+
+                    # Append the sequence to the sequence batch
+                    sequence_batch.append((seq_id, clipped_protein_sequence))
 
                 # If the sequence batch is full, encode the sequences
                 if len(sequence_batch) == args.batch_size:
