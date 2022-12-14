@@ -1,6 +1,7 @@
 from tqdm import tqdm
 import torch
 from torch.utils.data import DataLoader, random_split
+from torch.optim.lr_scheduler import StepLR
 import pandas as pd
 import argparse
 
@@ -11,6 +12,8 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--lr", type=float, default=0.001)
 parser.add_argument("--batch_size", type=int, default=32)
 parser.add_argument("--num_epochs", type=int, default=2)
+parser.add_argument("--step_size", type=int, default=10)
+parser.add_argument("--gamma", type=float, default=0.1)
 parser.add_argument("--tm_mean", type=float, default=51.399974792034286)
 parser.add_argument("--tm_std", type=float, default=12.075682499193073)
 parser.add_argument("--tren_csv_file", type=str, default="train_ready_embeddings_esm2_t33_650M_UR50D.csv")
@@ -66,12 +69,13 @@ class MLP(torch.nn.Module):
   def __init__(self,
   input_size = 1281,
   hidden_size = 256,
-  output_size = 1
+  output_size = 1,
+  dropout = 0.5,
 ):
     super().__init__()
     self.fc1 = torch.nn.Linear(input_size, hidden_size)
     self.layer_norm1 = torch.nn.LayerNorm(hidden_size)
-    self.dropout = torch.nn.Dropout(p=0.5)
+    self.dropout = torch.nn.Dropout(p=dropout)
     self.fc2 = torch.nn.Linear(hidden_size, hidden_size)
     self.layer_norm2 = torch.nn.LayerNorm(hidden_size)
     self.fc3 = torch.nn.Linear(hidden_size, output_size)
@@ -158,6 +162,9 @@ if __name__ == "__main__":
     # Create an optimizer
     optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
 
+    # Create a learning rate scheduler
+    scheduler = StepLR(optimizer, step_size=args.step_size, gamma=args.gamma)
+
     # Load the dataset
     train_data_full = TrainData(args.train_csv_file)
 
@@ -180,6 +187,9 @@ if __name__ == "__main__":
 
         # Train the model
         train_mlp(model, train_loader, criterion, optimizer, num_epochs=args.num_epochs)
+
+        # Update the learning rate
+        scheduler.step()
 
         # Test the model
         test_loss = test_mlp(model, val_loader, criterion)
