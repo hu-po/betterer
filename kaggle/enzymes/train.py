@@ -1,5 +1,6 @@
+from tqdm import tqdm
 import torch
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, random_split
 import pandas as pd
 import argparse
 
@@ -7,6 +8,7 @@ import argparse
 parser = argparse.ArgumentParser()
 
 # Define command line arguments
+parser.add_argument("--lr", type=float, default=0.001)
 parser.add_argument("--batch_size", type=int, default=32)
 parser.add_argument("--num_epochs", type=int, default=2)
 parser.add_argument("--tm_mean", type=float, default=51.399974792034286)
@@ -60,41 +62,43 @@ class TestData(torch.utils.data.Dataset):
                 return self.tensor[idx], self.seq_id[idx]
 
 
-# Create a model (MLP) to train on the sequences
 class MLP(torch.nn.Module):
-  def __init__(self):
-    super(MLP, self).__init__()
-    self.fc1 = torch.nn.Linear(1281, 512)
-    self.fc2 = torch.nn.Linear(512, 256)
-    self.fc3 = torch.nn.Linear(256, 1)
-
-    # Apply dropout and normalization
+  def __init__(self,
+  input_size = 1281,
+  hidden_size = 256,
+  output_size = 1
+):
+    super().__init__()
+    self.fc1 = torch.nn.Linear(input_size, hidden_size)
+    self.layer_norm1 = torch.nn.LayerNorm(hidden_size)
     self.dropout = torch.nn.Dropout(p=0.5)
-    self.layer_norm1 = torch.nn.LayerNorm(512)
-    self.layer_norm2 = torch.nn.LayerNorm(256)
+    self.fc2 = torch.nn.Linear(hidden_size, hidden_size)
+    self.layer_norm2 = torch.nn.LayerNorm(hidden_size)
+    self.fc3 = torch.nn.Linear(hidden_size, output_size)
 
   def forward(self, x):
     x = self.fc1(x)
     x = self.layer_norm1(x)
     x = self.dropout(x)
+    x = torch.nn.relu(x)
     x = self.fc2(x)
     x = self.layer_norm2(x)
     x = self.dropout(x)
+    x = torch.nn.relu(x)
     x = self.fc3(x)
     return x
 
-
 # Function for training an MLP
-def train_mlp(model, train_loader, criterion, optimizer, num_epochs=100):
+def train_mlp(model, train_loader, criterion, optimizer):
 
-    # Loop over the number of epochs
-    for epoch in range(num_epochs):
-
-        # Print the epoch number
-        print(f"Epoch {epoch}")
-
+    # Use tqdm to create a progress bar for the training loop
+    with tqdm(total=len(train_loader)) as pbar:
+        
         # Loop over the training data
-        for i, data in enumerate(train_loader):
+        for data in train_loader:
+
+            # Update the progress bar
+            pbar.update(1)
 
             # Get the input and target
             input, target = data
@@ -114,13 +118,16 @@ def train_mlp(model, train_loader, criterion, optimizer, num_epochs=100):
 
 # Function for testing an MLP
 def test_mlp(model, test_loader, criterion):
-    
+
+    # Use tqdm to create a progress bar for the test loop
+    with tqdm(total=len(test_loader)) as pbar:
+        
         # Initialize a list to store the losses
         losses = []
-    
+
         # Loop over the test data
-        for i, data in enumerate(test_loader):
-    
+        for data in test_loader:
+
             # Get the input and target
             input, target = data
     
@@ -149,20 +156,34 @@ if __name__ == "__main__":
     criterion = torch.nn.MSELoss()
 
     # Create an optimizer
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+    optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
+
+    # Load the dataset
+    train_data_full = TrainData(args.train_csv_file)
+
+    # Split the dataset into train and validation sets with a split ratio of 0.8
+    train_size = int(0.8 * len(train_data_full))
+    val_size = len(train_data_full) - train_size
+    train_data, val_data = random_split(train_data_full, [train_size, val_size])
 
     # Create a dataloader for the training data
-    train_loader = DataLoader(TrainData(args.tren_csv_file), batch_size=args.batch_size, shuffle=True)
+    train_loader = DataLoader(train_data, batch_size=args.batch_size, shuffle=True)
 
-    # Train the model
-    train_mlp(model, train_loader, criterion, optimizer, num_epochs=args.num_epochs)
+    # Create a dataloader for the validation data
+    val_loader = DataLoader(val_data, batch_size=args.batch_size, shuffle=False)
 
-    # # Create a dataloader for the training data
-    # valid_loader = DataLoader(TrainData(args.tren_csv_file), batch_size=args.batch_size, shuffle=True)
+    # Loop over the number of epochs
+    for epoch in range(args.num_epochs):
 
-    # # Test the model
-    # test_loss = test_mlp(model, test_loader, criterion)
-    # print(f"Test loss: {test_loss:.4f}")
+        # Print the epoch number
+        print(f"Epoch {epoch}")
+
+        # Train the model
+        train_mlp(model, train_loader, criterion, optimizer, num_epochs=args.num_epochs)
+
+        # Test the model
+        test_loss = test_mlp(model, val_loader, criterion)
+        print(f"Test loss: {test_loss:.4f}")
 
     # Create a dataloader for the test data
     test_loader = DataLoader(TestData(args.test_csv_file), batch_size=args.batch_size, shuffle=False)

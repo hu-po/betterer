@@ -3,6 +3,7 @@ import csv
 import gc
 import esm
 import argparse
+import random
 
 
 # Create an ArgumentParser object
@@ -120,6 +121,9 @@ if __name__ == "__main__":
 
                 # Clip the protein sequence to the maximum sequence length
                 protein_sequence = protein_sequence[:max_sequence_length-2]
+
+                # Randomly sample a window of the sequence instead of clipping it
+                protein_sequence = protein_sequence[random.randint(0, len(protein_sequence) - max_sequence_length):]
 
                 # Append the sequence to the sequence batch
                 sequence_batch.append((seq_id, protein_sequence))
