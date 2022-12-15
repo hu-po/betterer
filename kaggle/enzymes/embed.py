@@ -2,7 +2,6 @@
     Step 2: Use Pre-Trained Protein LLMs to embedd a sequence string.
     ======================
 
-
 """
 
 import argparse

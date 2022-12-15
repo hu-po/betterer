@@ -36,12 +36,12 @@ python embed.py --gpu 0 --csv_input_file test_clean.csv --csv_output_file test_e
 
 *Step 4* Optimize Hyperparameters for MLP
 ```
-
+python optimize.py
 ```
 
 *Step 5* Combine predictions from best performing models (mixture of experts)
 ```
-
+python submit.py
 ```
 
 ## 15.12.2022

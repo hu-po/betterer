@@ -12,6 +12,8 @@ from torch.optim.lr_scheduler import StepLR
 from torch.utils.data import DataLoader, random_split
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
+from typing import Any
+
 
 # Create an ArgumentParser object
 parser = argparse.ArgumentParser()
@@ -172,7 +174,20 @@ def test_mlp(model, test_loader, criterion, epoch=None, tbwriter=None):
         # Return the average loss
         return cum_loss
 
-def perform_one_run(args):
+def perform_one_run(
+    lr: float = 0.001,
+    batch_size: int = 32,
+    num_epochs: int = 2,
+    step_size: int = 10,
+    gamma: float = 0.1,
+    tm_mean: float = 51.399974792034286,
+    tm_std: float = 12.075682499193073,
+    tren_csv_file: str = "train_ready_embeddings_esm2_t33_650M_UR50D.csv",
+    test_csv_file: str = "test_ready_embeddings_esm2_t33_650M_UR50D.csv",
+    pred_csv_file: str = "predictions_embeddings_esm2_t33_650M_UR50D.csv",
+    log_dir: str = "logs",
+    run_name: str = "debug",
+) -> float:
 
     # Create a model
     model = MLP()
@@ -181,13 +196,13 @@ def perform_one_run(args):
     criterion = torch.nn.MSELoss()
 
     # Create an optimizer
-    optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
+    optimizer = torch.optim.Adam(model.parameters(), lr=lr)
 
     # Create a learning rate scheduler
-    scheduler = StepLR(optimizer, step_size=args.step_size, gamma=args.gamma)
+    scheduler = StepLR(optimizer, step_size=step_size, gamma=gamma)
 
     # Load the dataset
-    train_data_full = TrainData(args.train_csv_file)
+    train_data_full = TrainData(tren_csv_file)
 
     # Split the dataset into train and validation sets with a split ratio of 0.8
     train_size = int(0.8 * len(train_data_full))
@@ -195,19 +210,22 @@ def perform_one_run(args):
     train_data, val_data = random_split(train_data_full, [train_size, val_size])
 
     # Create a dataloader for the training data
-    train_loader = DataLoader(train_data, batch_size=args.batch_size, shuffle=True)
+    train_loader = DataLoader(train_data, batch_size=batch_size, shuffle=True)
 
     # Create a dataloader for the validation data
-    val_loader = DataLoader(val_data, batch_size=args.batch_size, shuffle=False)
+    val_loader = DataLoader(val_data, batch_size=batch_size, shuffle=False)
 
     # Create a tensorboard writer
     tbwriter = SummaryWriter(
-        log_dir=args.log_dir,
-        log_name=args.run_name,
+        log_dir=log_dir,
+        log_name=run_name,
     )
 
+    # Best test loss
+    best_test_loss = float("inf")
+
     # Loop over the number of epochs
-    for epoch in range(args.num_epochs):
+    for epoch in range(num_epochs):
 
         # Print the epoch number
         print(f"Epoch {epoch}")
@@ -222,8 +240,13 @@ def perform_one_run(args):
         test_loss = test_mlp(model, val_loader, criterion, epoch=epoch, tbwriter=tbwriter)
         print(f"Test loss: {test_loss:.4f}")
 
+        # Check if loss is better than the best loss
+        if test_loss < best_test_loss:
+            best_test_loss = test_loss
+            print(f"Best test loss: {best_test_loss:.4f}")
+
     # Create a dataloader for the test data
-    test_loader = DataLoader(TestData(args.test_csv_file), batch_size=args.batch_size, shuffle=False)
+    test_loader = DataLoader(TestData(test_csv_file), batch_size=batch_size, shuffle=False)
 
     # Predict the labels for the test data
     predictions = {
@@ -236,8 +259,8 @@ def perform_one_run(args):
             output = model(input)
 
         # Normalizations for the train/test data
-        tm_mean = args.tm_mean
-        tm_std = args.tm_std
+        tm_mean = tm_mean
+        tm_std = tm_std
 
         # Denormalize the output
         output = output * tm_std + tm_mean
@@ -249,7 +272,9 @@ def perform_one_run(args):
     df = pd.DataFrame(predictions)
 
     # Save the predictions to a CSV file
-    df.to_csv(args.pred_csv_file, index=False)
+    df.to_csv(pred_csv_file, index=False)
+
+    return best_test_loss
 
 
 
@@ -257,4 +282,7 @@ if __name__ == "__main__":
 
     # Parse the command line arguments
     args = parser.parse_args()
+
+    # Perform one run
+    perform_one_run(**vars(args))
 
