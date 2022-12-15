@@ -1,22 +1,7 @@
 """
-Train an MLP to predict the melting temperature of a protein sequence.
+    Step 3: Train an MLP to predict the melting temperature of a protein sequence.
+    ======================
 
-Command to train the model:
-    
-python train.py --tren_csv_file train_ready_embeddings_esm2_t33_650M_UR50D.csv --test_csv_file test_ready_embeddings_esm2_t33_650M_UR50D.csv --model_name esm2_t33_650M_UR50D
-python train.py --tren_csv_file train_ready_embeddings_esm2_t33_650M_UR50D.csv --test_csv_file test_ready_embeddings_esm2_t33_650M_UR50D.csv --model_name esm2_t33_650M_UR50D
-python train.py --tren_csv_file train_ready_embeddings_esm2_t33_650M_UR50D.csv --test_csv_file test_ready_embeddings_esm2_t33_650M_UR50D.csv --model_name esm2_t33_650M_UR50D
-python train.py --tren_csv_file train_ready_embeddings_esm2_t33_650M_UR50D.csv --test_csv_file test_ready_embeddings_esm2_t33_650M_UR50D.csv --model_name esm2_t33_650M_UR50D
-
-train_embeddings_augmented_esm1v_t33_650M_UR90S_1.csv
-train_embeddings_augmented_esm1v_t33_650M_UR90S_5.csv
-train_embeddings_augmented_esm2_t33_650M_UR50D.csv
-train_embeddings_augmented_esm2_t48_15B_UR50D.csv
-
-test_embeddings_augmented_esm1v_t33_650M_UR90S_1.csv
-test_embeddings_augmented_esm1v_t33_650M_UR90S_5.csv
-test_embeddings_augmented_esm2_t33_650M_UR50D.csv
-test_embeddings_augmented_esm2_t48_15B_UR50D.csv
 """
 
 import argparse
@@ -25,6 +10,7 @@ import pandas as pd
 import torch
 from torch.optim.lr_scheduler import StepLR
 from torch.utils.data import DataLoader, random_split
+from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 
 # Create an ArgumentParser object
@@ -38,61 +24,67 @@ parser.add_argument("--step_size", type=int, default=10)
 parser.add_argument("--gamma", type=float, default=0.1)
 parser.add_argument("--tm_mean", type=float, default=51.399974792034286)
 parser.add_argument("--tm_std", type=float, default=12.075682499193073)
-parser.add_argument("--tren_csv_file", type=str, default="train_ready_embeddings_esm2_t33_650M_UR50D.csv")
-parser.add_argument("--test_csv_file", type=str, default="test_ready_embeddings_esm2_t33_650M_UR50D.csv")
-parser.add_argument("--pred_csv_file", type=str, default="predictions_embeddings_esm2_t33_650M_UR50D.csv")
+parser.add_argument("--tren_csv_file", type=str,
+                    default="train_ready_embeddings_esm2_t33_650M_UR50D.csv")
+parser.add_argument("--test_csv_file", type=str,
+                    default="test_ready_embeddings_esm2_t33_650M_UR50D.csv")
+parser.add_argument("--pred_csv_file", type=str,
+                    default="predictions_embeddings_esm2_t33_650M_UR50D.csv")
+parser.add_argument("--log_dir", type=str, default="logs")
+parser.add_argument("--run_name", type=str, default="debug")
 
-# Make a class for the dataset
+
 class TrainData(torch.utils.data.Dataset):
-    
+
         def __init__(self, csv_file):
             # Read the CSV file into a pandas DataFrame
             df = pd.read_csv(csv_file)
-    
+
             # Separate the target from the input
             self.target = df.pop("tm")
             self.input = df[["pH"] + [f"latent_{i}" for i in range(1280)]]
-    
+
             # Convert the DataFrame into a PyTorch tensor
             self.tensor = torch.Tensor(self.input.values)
 
             # Convert target into a PyTorch tensor
             self.target = torch.Tensor(self.target.values)
-            
+
             # Add batch dimmension to target
             self.target = self.target.unsqueeze(1)
-    
+
         def __len__(self):
             return len(self.tensor)
-    
+
         def __getitem__(self, idx):
             return self.tensor[idx], self.target[idx]
 
+
 class TestData(torch.utils.data.Dataset):
-        
+
             def __init__(self, csv_file):
                 # Read the CSV file into a pandas DataFrame
                 df = pd.read_csv(csv_file)
 
                 self.seq_id = df.pop("seq_id")
                 self.input = df[["pH"] + [f"latent_{i}" for i in range(1280)]]
-        
+
                 # Convert the DataFrame into a PyTorch tensor
                 self.tensor = torch.Tensor(self.input.values)
-        
+
             def __len__(self):
                 return len(self.tensor)
-        
+
             def __getitem__(self, idx):
                 return self.tensor[idx], self.seq_id[idx]
 
 
 class MLP(torch.nn.Module):
   def __init__(self,
-  input_size = 1281,
-  hidden_size = 256,
-  output_size = 1,
-  dropout = 0.5,
+  input_size=1281,
+  hidden_size=256,
+  output_size=1,
+  dropout=0.5,
 ):
     super().__init__()
     self.fc1 = torch.nn.Linear(input_size, hidden_size)
@@ -115,11 +107,13 @@ class MLP(torch.nn.Module):
     return x
 
 # Function for training an MLP
-def train_mlp(model, train_loader, criterion, optimizer):
+
+
+def train_mlp(model, train_loader, criterion, optimizer, epoch=None, tbwriter=None):
 
     # Use tqdm to create a progress bar for the training loop
     with tqdm(total=len(train_loader)) as pbar:
-        
+
         # Loop over the training data
         for data in train_loader:
 
@@ -142,8 +136,11 @@ def train_mlp(model, train_loader, criterion, optimizer):
             # Update weights
             optimizer.step()
 
+            # Log loss to tensorboard
+            tbwriter.add_scalar('train/loss', loss.item(), epoch)
+
 # Function for testing an MLP
-def test_mlp(model, test_loader, criterion):
+def test_mlp(model, test_loader, criterion, epoch=None, tbwriter=None):
 
     # Use tqdm to create a progress bar for the test loop
     with tqdm(total=len(test_loader)) as pbar:
@@ -165,15 +162,17 @@ def test_mlp(model, test_loader, criterion):
     
             # Store the loss
             losses.append(loss.item())
+
+        # Cumulative loss
+        cum_loss = sum(losses) / len(losses)
+
+        # Log loss to tensorboard
+        tbwriter.add_scalar('valid/loss', cum_loss, epoch)
     
         # Return the average loss
-        return sum(losses) / len(losses)
+        return cum_loss
 
-
-if __name__ == "__main__":
-
-    # Parse the command line arguments
-    args = parser.parse_args()
+def perform_one_run(args):
 
     # Create a model
     model = MLP()
@@ -201,6 +200,12 @@ if __name__ == "__main__":
     # Create a dataloader for the validation data
     val_loader = DataLoader(val_data, batch_size=args.batch_size, shuffle=False)
 
+    # Create a tensorboard writer
+    tbwriter = SummaryWriter(
+        log_dir=args.log_dir,
+        log_name=args.run_name,
+    )
+
     # Loop over the number of epochs
     for epoch in range(args.num_epochs):
 
@@ -208,13 +213,13 @@ if __name__ == "__main__":
         print(f"Epoch {epoch}")
 
         # Train the model
-        train_mlp(model, train_loader, criterion, optimizer, num_epochs=args.num_epochs)
+        train_mlp(model, train_loader, criterion, optimizer, epoch=epoch, tbwriter=tbwriter)
 
         # Update the learning rate
         scheduler.step()
 
         # Test the model
-        test_loss = test_mlp(model, val_loader, criterion)
+        test_loss = test_mlp(model, val_loader, criterion, epoch=epoch, tbwriter=tbwriter)
         print(f"Test loss: {test_loss:.4f}")
 
     # Create a dataloader for the test data
@@ -245,3 +250,11 @@ if __name__ == "__main__":
 
     # Save the predictions to a CSV file
     df.to_csv(args.pred_csv_file, index=False)
+
+
+
+if __name__ == "__main__":
+
+    # Parse the command line arguments
+    args = parser.parse_args()
+
