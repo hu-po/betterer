@@ -1,9 +1,31 @@
-from tqdm import tqdm
-import torch
-from torch.utils.data import DataLoader, random_split
-from torch.optim.lr_scheduler import StepLR
-import pandas as pd
+"""
+Train an MLP to predict the melting temperature of a protein sequence.
+
+Command to train the model:
+    
+python train.py --tren_csv_file train_ready_embeddings_esm2_t33_650M_UR50D.csv --test_csv_file test_ready_embeddings_esm2_t33_650M_UR50D.csv --model_name esm2_t33_650M_UR50D
+python train.py --tren_csv_file train_ready_embeddings_esm2_t33_650M_UR50D.csv --test_csv_file test_ready_embeddings_esm2_t33_650M_UR50D.csv --model_name esm2_t33_650M_UR50D
+python train.py --tren_csv_file train_ready_embeddings_esm2_t33_650M_UR50D.csv --test_csv_file test_ready_embeddings_esm2_t33_650M_UR50D.csv --model_name esm2_t33_650M_UR50D
+python train.py --tren_csv_file train_ready_embeddings_esm2_t33_650M_UR50D.csv --test_csv_file test_ready_embeddings_esm2_t33_650M_UR50D.csv --model_name esm2_t33_650M_UR50D
+
+train_embeddings_augmented_esm1v_t33_650M_UR90S_1.csv
+train_embeddings_augmented_esm1v_t33_650M_UR90S_5.csv
+train_embeddings_augmented_esm2_t33_650M_UR50D.csv
+train_embeddings_augmented_esm2_t48_15B_UR50D.csv
+
+test_embeddings_augmented_esm1v_t33_650M_UR90S_1.csv
+test_embeddings_augmented_esm1v_t33_650M_UR90S_5.csv
+test_embeddings_augmented_esm2_t33_650M_UR50D.csv
+test_embeddings_augmented_esm2_t48_15B_UR50D.csv
+"""
+
 import argparse
+
+import pandas as pd
+import torch
+from torch.optim.lr_scheduler import StepLR
+from torch.utils.data import DataLoader, random_split
+from tqdm import tqdm
 
 # Create an ArgumentParser object
 parser = argparse.ArgumentParser()
