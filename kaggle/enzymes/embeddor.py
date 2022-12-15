@@ -10,14 +10,10 @@ python embeddor.py --gpu 0 --csv_input_file train_filtered.csv --csv_output_file
 
 Command to embedd the TEST sequences:
 
-python embeddor.py --csv_input_file test_filtered.csv --csv_output_file test_filtered_encoded.csv
-
-python embeddor.py --gpu 0 --csv_input_file test_filtered.csv --csv_output_file test_embeddings_augmented_esm1v_t33_650M_UR90S_1.csv --batch_size 2 --model esm1v_t33_650M_UR90S_1
-python embeddor.py --gpu 0 --csv_input_file test_filtered.csv --csv_output_file test_embeddings_augmented_esm1v_t33_650M_UR90S_5.csv --batch_size 2 --model esm1v_t33_650M_UR90S_5
-python embeddor.py --gpu 0 --csv_input_file test_filtered.csv --csv_output_file test_embeddings_augmented_esm2_t33_650M_UR50D.csv --batch_size 2 --model esm2_t33_650M_UR50D
-python embeddor.py --gpu 0 --csv_input_file test_filtered.csv --csv_output_file test_embeddings_augmented_esm2_t48_15B_UR50D.csv --batch_size 2 --model esm2_t48_15B_UR50D
-
-
+python embeddor.py --gpu 0 --csv_input_file test_normalized.csv --csv_output_file test_embeddings_augmented_esm1v_t33_650M_UR90S_1.csv --batch_size 2 --model esm1v_t33_650M_UR90S_1
+python embeddor.py --gpu 0 --csv_input_file test_normalized.csv --csv_output_file test_embeddings_augmented_esm1v_t33_650M_UR90S_5.csv --batch_size 2 --model esm1v_t33_650M_UR90S_5
+python embeddor.py --gpu 0 --csv_input_file test_normalized.csv --csv_output_file test_embeddings_augmented_esm2_t33_650M_UR50D.csv --batch_size 2 --model esm2_t33_650M_UR50D
+python embeddor.py --gpu 0 --csv_input_file test_normalized.csv --csv_output_file test_embeddings_augmented_esm2_t48_15B_UR50D.csv --batch_size 2 --model esm2_t48_15B_UR50D
 """
 
 import argparse
