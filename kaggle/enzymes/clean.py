@@ -1,6 +1,4 @@
-"""
-    Step 1: Clean the data
-    ======================
+"""Clean the data
 
     The raw data is in two files:
         - train.csv

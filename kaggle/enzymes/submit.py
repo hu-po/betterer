@@ -1,7 +1,4 @@
-"""
-    Step 5: Combine the predictions from the best models
-    ======================
-"""
+"""Combine the predictions from the best models."""
 import pandas as pd
 
 # read in the csv files using pandas

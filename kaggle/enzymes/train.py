@@ -1,8 +1,4 @@
-"""
-    Step 3: Train an MLP to predict the melting temperature of a protein sequence.
-    ======================
-
-"""
+"""Train an MLP to predict the melting temperature of a protein sequence."""
 
 import argparse
 

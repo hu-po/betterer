@@ -1,3 +1,5 @@
+""" This script generates a baseline submission file for the Kaggle "Predicting the Melting Temperature of DNA" competition."""
+
 import csv
 import random
 

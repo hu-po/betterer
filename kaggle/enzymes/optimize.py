@@ -1,8 +1,4 @@
-"""
-    Step 4: Optimize Hyperparameters for MLP/Data using HyperOpt
-    ======================
-
-"""
+"""Optimize Hyperparameters for MLP/Data using HyperOpt."""
 
 import hyperopt
 from hyperopt import fmin, tpe, hp
