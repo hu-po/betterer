@@ -16,6 +16,7 @@ venv/
 
 # Saved models
 *.onnx
+*.pt
 
 # =========== #
 #    Data     #
